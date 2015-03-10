@@ -11,6 +11,8 @@ module Foursquare1SelfLib
   def register_stream(oneself_username, registration_token, callback_url)
     headers =  {Authorization: "#{APP_ID}:#{APP_SECRET}", 'registration-token' => registration_token,
                 'content-type' => 'application/json'}
+
+    puts "HEADERS ARE #{headers.inspect}"
     response =  RestClient::Request.execute(
       method: :post,
       payload: {:callbackUrl => callback_url}.to_json,
