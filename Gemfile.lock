@@ -1,19 +1,19 @@
 GIT
-  remote: git@github.com:anildigital/omniauth.git
-  revision: fc304abe2b56cb6efeff87efdc50d120f4d8e1c0
-  specs:
-    omniauth (1.2.2)
-      hashie (>= 1.2, < 4)
-      rack (~> 1.0)
-
-GIT
-  remote: https://github.com/anildigital/foursquare2
+  remote: https://github.com/anildigital/foursquare2.git
   revision: 497e00cc8a28e3affa0d26c3e4cd1494535e719e
   specs:
     foursquare2 (2.0.1)
       faraday (~> 0.8)
       faraday_middleware (>= 0.8)
       hashie (>= 1.0, < 4.0.0)
+
+GIT
+  remote: https://github.com/anildigital/omniauth.git
+  revision: fc304abe2b56cb6efeff87efdc50d120f4d8e1c0
+  specs:
+    omniauth (1.2.2)
+      hashie (>= 1.2, < 4)
+      rack (~> 1.0)
 
 GEM
   remote: http://rubygems.org/
