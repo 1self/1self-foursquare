@@ -4,7 +4,7 @@ require 'omniauth-foursquare'
 require 'rest-client'
 require 'time'
 require 'foursquare2'
-require_relative './1self_twitter'
+require_relative './1self_foursquare'
 
 CALLBACK_BASE_URI = ENV['CALLBACK_BASE_URI'] || 'http://localhost:4567'
 
