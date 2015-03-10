@@ -72,15 +72,16 @@ module Foursquare1SelfLib
       data[:dateTime] =  Time.at(checkin['createdAt']).utc.iso8601
       data[:latestSyncField] = checkin['createdAt']
       data[:properties] = {}
+      data[:location] = {}
       data[:properties][:name] = checkin['venue']['name']
       data[:properties][:address] = checkin['venue']['location']['address']
       data[:properties][:city] = checkin['venue']['location']['city']
       data[:properties][:state] = checkin['venue']['location']['state']
       data[:properties][:country] = checkin['venue']['location']['country']
-      data[:properties][:lat] =  checkin['venue']['location']['lat']
-      data[:properties][:lng] =  checkin['venue']['location']['lng']
       data[:properties][:cc] = checkin['venue']['location']['cc']
       data[:properties][:crossStreet] = checkin['venue']['location']['crossStreet']
+      data[:location][:lat] =  checkin['venue']['location']['lat']
+      data[:location][:lng] =  checkin['venue']['location']['lng']
 
       oneself_events << event.merge(data)
     end
