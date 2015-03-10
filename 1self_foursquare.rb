@@ -54,8 +54,8 @@ module Foursquare1SelfLib
     event = {
       source: 'foursquare integration',
       version: '0.0.1',
-      objectTags: ['foursquare'],
-      actionTags: ['checkin'],
+      objectTags: ['internet', 'social-network', 'foursquare'],
+      actionTags: ['checkin', 'publish'],
       properties: {},
       dateTime: Time.now.utc.iso8601,
       latestSyncField: Time.now.utc.to_i
@@ -75,6 +75,10 @@ module Foursquare1SelfLib
       data[:properties][:city] = checkin['venue']['location']['city']
       data[:properties][:state] = checkin['venue']['location']['state']
       data[:properties][:country] = checkin['venue']['location']['country']
+      data[:properties][:lat] =  checkin['venue']['location']['lat']
+      data[:properties][:lng] =  checkin['venue']['location']['lng']
+      data[:properties][:cc] = checkin['venue']['location']['cc']
+      data[:properties][:crossStreet] = checkin['venue']['location']['crossStreet']
 
       oneself_events << event.merge(data)
     end
