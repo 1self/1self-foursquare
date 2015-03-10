@@ -27,20 +27,22 @@ end
 get '/' do
   session['oneselfUsername'] = params[:username]
   session['registrationToken'] = params[:token]
-  erb :index
+  redirect to("/auth/foursquare")
 end
 
 get '/auth/foursquare/callback' do
   username = request.env['omniauth.auth']['uid']
   auth_token = request.env['omniauth.auth']['credentials']['token']
 
-  callback_url = "#{CALLBACK_BASE_URI}/sync?username=#{username}&auth_token=#{auth_token}&latestSyncField={{latestSyncField}}&streamid={{streamid}}"
+  encrypted_auth_token = Foursquare1SelfLib.encrypt(auth_token)
+  escaped_auth_token =  CGI.escape(encrypted_auth_token)
+  callback_url = "#{CALLBACK_BASE_URI}/sync?username=#{username}&auth_token=#{escaped_auth_token}&latestSyncField={{latestSyncField}}&streamid={{streamid}}"
 
   stream_resp = Foursquare1SelfLib.register_stream(session['oneselfUsername'], session['registrationToken'], callback_url)
   stream = JSON.parse(stream_resp)
   puts 'Registered stream'
 
-  checkins = Foursquare1SelfLib.fetch_checkins(auth_token)
+  checkins = Foursquare1SelfLib.fetch_checkins(encrypted_auth_token)
   puts 'Fetched checkins'
 
   oneself_events = Foursquare1SelfLib.convert_to_1self_events(checkins)
@@ -54,10 +56,10 @@ get '/sync' do
   latest_sync_field = params[:latestSyncField]
   streamid = params[:streamid]
   # username = params[:username]
-  auth_token = params[:auth_token]
+  encrypted_auth_token = params[:auth_token]
   write_token = request.env['HTTP_AUTHORIZATION']
 
-  checkins = Foursquare1SelfLib.fetch_checkins(auth_token, latest_sync_field)
+  checkins = Foursquare1SelfLib.fetch_checkins(encrypted_auth_token, latest_sync_field)
   puts 'Fetched checkins'
 
   oneself_events = Foursquare1SelfLib.convert_to_1self_events(checkins)

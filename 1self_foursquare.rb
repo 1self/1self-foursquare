@@ -1,4 +1,5 @@
 # Foursquare 1self lib
+require 'gibberish'
 
 module Foursquare1SelfLib
 
@@ -7,12 +8,12 @@ module Foursquare1SelfLib
   APP_ID = ENV['APP_ID'] || 'app-id-fsqf3dsd91d9a3e715ff98bb9eedbd0a'
   APP_SECRET = ENV['APP_SECRET'] || 'app-secret-fsq2d606d784d87c0324335dadsddbd39b0f14c3196df6f128ff8ee8f36d14cd'
   API_BASE_URL = ENV['API_BASE_URL'] || 'http://localhost:5000'
+  ENCRYPTION_KEY = ENV['ENCRYPTION_KEY'] || 'bMjEAvZnfZy3ZvuiFXPvWPLEkPM3VB'
 
   def register_stream(oneself_username, registration_token, callback_url)
     headers =  {Authorization: "#{APP_ID}:#{APP_SECRET}", 'registration-token' => registration_token,
                 'content-type' => 'application/json'}
 
-    puts "HEADERS ARE #{headers.inspect}"
     response =  RestClient::Request.execute(
       method: :post,
       payload: {:callbackUrl => callback_url}.to_json,
@@ -23,9 +24,10 @@ module Foursquare1SelfLib
     response
   end
 
-  def fetch_checkins(auth_token, afterTimestamp=nil)
+  def fetch_checkins(encrypted_auth_token, afterTimestamp=nil)
     checkins = []
     offset = 0
+    auth_token = decrypt(encrypted_auth_token)
     client = Foursquare2::Client.new(:oauth_token => auth_token, :api_version => Time.now.strftime("%Y%m%d"))
 
     if !afterTimestamp || afterTimestamp.empty?
@@ -121,6 +123,16 @@ module Foursquare1SelfLib
         properties: {
         }
       }]
+  end
+
+  def encrypt(token)
+    cipher = Gibberish::AES.new(ENCRYPTION_KEY)
+    cipher.encrypt(token)
+  end
+
+  def decrypt(encrypted_token)
+    cipher = Gibberish::AES.new(ENCRYPTION_KEY)
+    cipher.decrypt(encrypted_token)
   end
 
 end
