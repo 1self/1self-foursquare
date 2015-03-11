@@ -56,7 +56,7 @@ module Foursquare1SelfLib
   def convert_to_1self_events(checkins)
     oneself_events = []
     event = {
-      source: 'foursquare integration',
+      source: '1self-foursquare',
       version: '0.0.1',
       objectTags: ['internet', 'social-network', 'foursquare'],
       actionTags: ['checkin', 'publish'],
@@ -108,8 +108,8 @@ module Foursquare1SelfLib
       { dateTime: Time.now.utc.iso8601,
         objectTags: ['sync'],
         actionTags: ['start'],
-        source: 'foursquare integration',
         properties: {
+          source: '1self-foursquare'
         }
       }]
   end
@@ -119,8 +119,8 @@ module Foursquare1SelfLib
       { dateTime:  Time.now.utc.iso8601,
         objectTags: ['sync'],
         actionTags: ['complete'],
-        source: 'foursquare integration',
         properties: {
+          source: '1self-foursquare'
         }
       }]
   end
