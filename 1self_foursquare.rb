@@ -25,7 +25,7 @@ module Foursquare1SelfLib
 
   def fetch_checkins(encrypted_auth_token, afterTimestamp=nil)
     checkins = []
-    offset = 1500
+    offset = 0
     auth_token = Crypt.decrypt(encrypted_auth_token)
     client = Foursquare2::Client.new(:oauth_token => auth_token, :api_version => Time.now.strftime("%Y%m%d"))
 
