@@ -1,5 +1,5 @@
 # Foursquare 1self lib
-require 'gibberish'
+require_relative './crypt'
 
 module Foursquare1SelfLib
 
@@ -8,7 +8,6 @@ module Foursquare1SelfLib
   APP_ID = ENV['APP_ID'] || 'app-id-fsqf3dsd91d9a3e715ff98bb9eedbd0a'
   APP_SECRET = ENV['APP_SECRET'] || 'app-secret-fsq2d606d784d87c0324335dadsddbd39b0f14c3196df6f128ff8ee8f36d14cd'
   API_BASE_URL = ENV['API_BASE_URL'] || 'http://localhost:5000'
-  ENCRYPTION_KEY = ENV['ENCRYPTION_KEY'] || 'bMjEAvZnfZy3ZvuiFXPvWPLEkPM3VB'
 
   def register_stream(oneself_username, registration_token, callback_url)
     headers =  {Authorization: "#{APP_ID}:#{APP_SECRET}", 'registration-token' => registration_token,
@@ -26,8 +25,8 @@ module Foursquare1SelfLib
 
   def fetch_checkins(encrypted_auth_token, afterTimestamp=nil)
     checkins = []
-    offset = 0
-    auth_token = decrypt(encrypted_auth_token)
+    offset = 1500
+    auth_token = Crypt.decrypt(encrypted_auth_token)
     client = Foursquare2::Client.new(:oauth_token => auth_token, :api_version => Time.now.strftime("%Y%m%d"))
 
     if !afterTimestamp || afterTimestamp.empty?
@@ -53,40 +52,29 @@ module Foursquare1SelfLib
     checkins
   end
 
-  def convert_to_1self_events(checkins)
-    oneself_events = []
-    event = {
-      source: '1self-foursquare',
-      version: '0.0.1',
-      objectTags: ['internet', 'social-network', 'foursquare'],
-      actionTags: ['checkin', 'publish'],
-      properties: {},
-      dateTime: Time.now.utc.iso8601,
-      latestSyncField: Time.now.utc.to_i
-    }
+  def fetch_followers(username, encrypted_auth_token)
+    auth_token = Crypt.decrypt(encrypted_auth_token)
+    client = Foursquare2::Client.new(:oauth_token => auth_token, :api_version => Time.now.strftime("%Y%m%d"))
+    user = client.user(username)
+    user.friends["count"]
+  end
 
+  def convert_to_1self_events(checkins, followers_count)
+    oneself_events = []
+
+    # Create checkins event
     checkins.each do |checkin|
       if checkin["venue"].nil?
         next
       end
-
-      data = {}
-      data[:dateTime] =  Time.at(checkin['createdAt']).utc.iso8601
-      data[:latestSyncField] = checkin['createdAt']
-      data[:properties] = {}
-      data[:location] = {}
-      data[:properties][:name] = checkin['venue']['name']
-      data[:properties][:address] = checkin['venue']['location']['address']
-      data[:properties][:city] = checkin['venue']['location']['city']
-      data[:properties][:state] = checkin['venue']['location']['state']
-      data[:properties][:country] = checkin['venue']['location']['country']
-      data[:properties][:cc] = checkin['venue']['location']['cc']
-      data[:properties][:crossStreet] = checkin['venue']['location']['crossStreet']
-      data[:location][:lat] =  checkin['venue']['location']['lat']
-      data[:location][:lng] =  checkin['venue']['location']['lng']
-
-      oneself_events << event.merge(data)
+      checkin_event = get_checkin_event(checkin)
+      oneself_events << checkin_event
     end
+
+    # Create followers count event
+    followers_event = get_followers_event(followers_count)
+    oneself_events << followers_event
+
     oneself_events
   end
 
@@ -101,6 +89,57 @@ module Foursquare1SelfLib
       response = request.call(events)
     end
     request.call(create_sync_complete_event)
+  end
+
+
+  private
+
+  def get_event_common
+    {
+      source: '1self-foursquare',
+      version: '0.0.1',
+      properties: {},
+      dateTime: Time.now.utc.iso8601,
+      latestSyncField: 0
+    }
+  end
+
+
+  def get_checkin_event(checkin)
+    data = {}
+    data[:dateTime] =  Time.at(checkin['createdAt']).utc.iso8601
+    data[:latestSyncField] = checkin['createdAt']
+    data[:objectTags] = ['internet', 'social-network', 'foursquare']
+    data[:actionTags] = ['checkin', 'publish']
+    data[:properties] = {}
+    data[:location] = {}
+    data[:properties][:name] = checkin['venue']['name']
+    data[:properties][:address] = checkin['venue']['location']['address']
+    data[:properties][:city] = checkin['venue']['location']['city']
+    data[:properties][:state] = checkin['venue']['location']['state']
+    data[:properties][:country] = checkin['venue']['location']['country']
+    data[:properties][:cc] = checkin['venue']['location']['cc']
+    data[:properties][:crossStreet] = checkin['venue']['location']['crossStreet']
+    data[:location][:lat] =  checkin['venue']['location']['lat']
+    data[:location][:lng] =  checkin['venue']['location']['lng']
+
+    checkin_event = get_event_common
+    checkin_event.merge(data)
+  end
+
+  def get_followers_event(followers_count)
+    followers_event = {}
+
+    followers_event[:dateTime] =  Time.now.utc.iso8601
+    followers_event[:latestSyncField] = 0
+    followers_event[:objectTags] = ["internet", "social-network", "foursquare", "social-graph", "inbound", "follower"]
+    followers_event[:actionTags] = ['sample']
+    followers_event[:properties] = {}
+    followers_event[:properties][:source] = "1self-foursquare"
+    followers_event[:properties][:count] = followers_count
+
+    follower_event = get_event_common
+    follower_event.merge(followers_event)
   end
 
   def create_sync_start_event
@@ -123,16 +162,6 @@ module Foursquare1SelfLib
           source: '1self-foursquare'
         }
       }]
-  end
-
-  def encrypt(token)
-    cipher = Gibberish::AES.new(ENCRYPTION_KEY)
-    cipher.encrypt(token)
-  end
-
-  def decrypt(encrypted_token)
-    cipher = Gibberish::AES.new(ENCRYPTION_KEY)
-    cipher.decrypt(encrypted_token)
   end
 
 end

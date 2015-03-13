@@ -5,6 +5,7 @@ require 'rest-client'
 require 'time'
 require 'foursquare2'
 require_relative './1self_foursquare'
+require_relative './crypt'
 
 CALLBACK_BASE_URI = ENV['CALLBACK_BASE_URI'] || 'http://localhost:4567'
 
@@ -34,7 +35,7 @@ get '/auth/foursquare/callback' do
   username = request.env['omniauth.auth']['uid']
   auth_token = request.env['omniauth.auth']['credentials']['token']
 
-  encrypted_auth_token = Foursquare1SelfLib.encrypt(auth_token)
+  encrypted_auth_token = Crypt.encrypt(auth_token)
   escaped_auth_token =  CGI.escape(encrypted_auth_token)
   callback_url = "#{CALLBACK_BASE_URI}/sync?username=#{username}&auth_token=#{escaped_auth_token}&latestSyncField={{latestSyncField}}&streamid={{streamid}}"
 
@@ -45,7 +46,10 @@ get '/auth/foursquare/callback' do
   checkins = Foursquare1SelfLib.fetch_checkins(encrypted_auth_token)
   puts 'Fetched checkins'
 
-  oneself_events = Foursquare1SelfLib.convert_to_1self_events(checkins)
+  followers_count = Foursquare1SelfLib.fetch_followers(username, encrypted_auth_token)
+  puts 'Fetched followers count'
+
+  oneself_events = Foursquare1SelfLib.convert_to_1self_events(checkins, followers_count)
   puts 'Converted to 1self events'
 
   Foursquare1SelfLib.send_to_1self(stream['streamid'], stream['writeToken'], oneself_events)
@@ -55,6 +59,8 @@ end
 get '/sync' do
   latest_sync_field = params[:latestSyncField]
   streamid = params[:streamid]
+  username = params[:username]
+
   # username = params[:username]
   encrypted_auth_token = params[:auth_token]
   write_token = request.env['HTTP_AUTHORIZATION']
@@ -62,7 +68,10 @@ get '/sync' do
   checkins = Foursquare1SelfLib.fetch_checkins(encrypted_auth_token, latest_sync_field)
   puts 'Fetched checkins'
 
-  oneself_events = Foursquare1SelfLib.convert_to_1self_events(checkins)
+  followers_count = Foursquare1SelfLib.fetch_followers(username, encrypted_auth_token)
+  puts 'Fetched followers count'
+
+  oneself_events = Foursquare1SelfLib.convert_to_1self_events(checkins, followers_count)
   puts 'Converted to 1self events'
 
   Foursquare1SelfLib.send_to_1self(streamid, write_token, oneself_events)
