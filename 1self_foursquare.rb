@@ -145,7 +145,7 @@ module Foursquare1SelfLib
   def create_sync_start_event
     [
       { dateTime: Time.now.utc.iso8601,
-        objectTags: ['sync'],
+        objectTags: ['1self', 'integration', 'sync'],
         actionTags: ['start'],
         properties: {
           source: '1self-foursquare'
@@ -156,7 +156,7 @@ module Foursquare1SelfLib
   def create_sync_complete_event
     [
       { dateTime:  Time.now.utc.iso8601,
-        objectTags: ['sync'],
+        objectTags: ['1self', 'integration', 'sync'],
         actionTags: ['complete'],
         properties: {
           source: '1self-foursquare'
