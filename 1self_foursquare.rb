@@ -158,7 +158,7 @@ module Foursquare1SelfLib
       { dateTime:  Time.now.utc.iso8601,
         objectTags: ['1self', 'integration', 'sync'],
         actionTags: ['complete'],
-        source: '1self-foursquare'
+        source: '1self-foursquare',
         properties: {
         }
       }]
