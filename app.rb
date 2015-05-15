@@ -4,17 +4,18 @@ require 'omniauth-foursquare'
 require 'rest-client'
 require 'time'
 require 'foursquare2'
+require 'byebug'
 require_relative './1self_foursquare'
 require_relative './crypt'
 
 CALLBACK_BASE_URI = ENV['CALLBACK_BASE_URI'] || 'http://localhost:4567'
 
-CLIENT_ID = ENV['CLIENT_ID'] || 'DOWYGA5X3PVX3WXXDL0S3MMCZSAQBMJZHWYJSHLGU4B5O1BH'
-CLIENT_SECRET = ENV['CLIENT_SECRET'] || 'DPSNOMYFT2WETDZBIQTHAUW352C0CWJ5S2POQH1UHK2RZVES'
-API_BASE_URL = ENV['API_BASE_URL'] || 'http://localhost:5000'
+FOURSQUARE_CLIENT_ID = ENV['FOURSQUARE_CLIENT_ID'] || 'DOWYGA5X3PVX3WXXDL0S3MMCZSAQBMJZHWYJSHLGU4B5O1BH'
+FOURSQUARE_CLIENT_SECRET = ENV['FOURSQUARE_CLIENT_SECRET'] || 'DPSNOMYFT2WETDZBIQTHAUW352C0CWJ5S2POQH1UHK2RZVES'
+CONTEXT_URI = ENV['CONTEXT_URI'] || 'http://app.1self.dev'
 
 use OmniAuth::Builder do
-  provider :foursquare, CLIENT_ID, CLIENT_SECRET
+  provider :foursquare, FOURSQUARE_CLIENT_ID, FOURSQUARE_CLIENT_SECRET
 end
 
 configure do
@@ -28,6 +29,7 @@ end
 get '/' do
   session['oneselfUsername'] = params[:username]
   session['registrationToken'] = params[:token]
+  byebug
   redirect to("/auth/foursquare")
 end
 
@@ -53,7 +55,7 @@ get '/auth/foursquare/callback' do
   puts 'Converted to 1self events'
 
   Foursquare1SelfLib.send_to_1self(stream['streamid'], stream['writeToken'], oneself_events)
-  redirect(API_BASE_URL + '/integrations')
+  redirect(CONTEXT_URI + '/integrations')
 end
 
 get '/sync' do
